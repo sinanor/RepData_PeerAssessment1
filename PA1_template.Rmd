@@ -1,25 +1,92 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "Assignment"
+output: html_document
 ---
-
 
 ## Loading and preprocessing the data
 
-
+```{r, echo=TRUE}
+data <- read.csv("activity.csv")
+```
 
 ## What is mean total number of steps taken per day?
 
 
+total number of steps taken per day
 
-## What is the average daily activity pattern?
+```{r, echo=TRUE}
+totalnumberofsteps <- aggregate(steps ~ date, data,  sum)
+hist(totalnumberofsteps$steps , xlab="total number of steps", ylab="day")
+```
+
+```{r meanandmedian, echo=TRUE}
+meanoftotalnumberofsteps <- mean(totalnumberofsteps$steps)
+medianoftotalnumberofsteps <- median(totalnumberofsteps$steps)
+```
+
+Total number of steps taken per day
+
+- Mean `r as.integer(meanoftotalnumberofsteps)` 
+
+- Median `r medianoftotalnumberofsteps` 
+
+##What is the average daily activity pattern?
+
+```{r averagegraph, echo=TRUE, fig.height=4}
+averagesteps <- aggregate(steps  ~ interval , data,  mean)
+
+plot(averagesteps$interval, averagesteps$steps,  type = "l", xlab="interval", ylab="average numbers of taken")
+```
 
 
 
-## Imputing missing values
+```{r maxnumberofinterval, echo=TRUE, fig.height=4}
+#max number of interval
+
+maxstepsInterval <- data$interval[which.max(data$steps)]
+```
+
+steps that contains max number of steps is `r maxstepsInterval` 
+
+##Imputing missing values
+
+```{r nacounts, echo=TRUE}
+nacount <- sum(is.na(data$steps))
+```
+
+There are `r nacount` NA values in the data
+
+Filling NA's with interval means
+```{r imputing, echo=TRUE, fig.height=4}
+library(plyr)
+impute.mean <- function(x) replace(x, is.na(x), mean(x, na.rm = TRUE))
+data <- ddply(data, ~ interval, transform, steps = impute.mean(steps))
+totalnumberofsteps <- aggregate(steps ~ date, data,  sum)
+hist(totalnumberofsteps$steps , xlab="total number of steps", ylab="day")
+
+```
+
+As we can see increase with center values(10000-15000 steps day ) and decrease in extreme values(center of bar the bar grap gets bigger and others gets smaller)
+
+##Are there differences in activity patterns between weekdays and weekends?
+```{r weekdays, echo=TRUE, fig.height=20}
+
+library(lattice)
+
+data$date <- as.Date(data$date)
+
+weekdays1 <- c('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday')
+
+data$date <-  factor((weekdays(data$date) %in% weekdays1)+1L,
+                    levels=1:2, labels=c('weekend', 'weekday'))
 
 
+par(mfrow=c(2,1)) 
 
-## Are there differences in activity patterns between weekdays and weekends?
+plot <- xyplot(steps ~ interval | date, xlab = "interval", ylab = "Number of Steps", data=data, type = "l",main = "Average Steps by Interval", layout = c(1, 2))
+
+
+print(plot, position = c(0, .3, 1, .9), more = TRUE)
+```
+
+ 
